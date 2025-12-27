@@ -46,10 +46,10 @@ const Selection = () => {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container selection-view">
       <h1 className="page-title">Select Your Role</h1>
       <p className="page-subtitle">Choose how you want to proceed</p>
-      
+
       <div className="option-container">
         <div
           className={`option-card ${selectedOption === 'staff' ? 'selected' : ''}`}

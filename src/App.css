@@ -820,3 +820,21 @@
   border: none;
   box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
 }
+
+/* ================= SELECTION PAGE BACKGROUND ================= */
+
+/* Use :has selector to style the main App container when Selection page is active */
+.App:has(.selection-view) {
+  background-image: url('https://images.pexels.com/photos/6995247/pexels-photo-6995247.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Add transparency to the selection card so background is visible */
+.selection-view {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
