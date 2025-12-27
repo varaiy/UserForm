@@ -13,6 +13,7 @@
  */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Register from './pages/Register';
 import Selection from './pages/Selection';
 import Staff from './pages/Staff';
 import Guest from './pages/Guest';
@@ -25,11 +26,11 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Default route: redirect to Selection */}
-          <Route path="/" element={<Navigate to="/Selection" replace />} />
+          {/* Default route: redirect to user login */}
+          <Route path="/" element={<Navigate to="/register" replace />} />
           
           {/* User routes */}
-         
+          <Route path="/register" element={<Register />} />
           <Route path="/selection" element={<Selection />} />
           <Route path="/staff" element={<Staff />} />
           <Route path="/guest" element={<Guest />} />

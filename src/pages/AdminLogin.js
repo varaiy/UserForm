@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 
 const AdminLogin = () => {
   const [credentials, setCredentials] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  // Simple admin credentials (in a real app, this would be handled by a backend)
-  const ADMIN_USERNAME = 'admin';
-  const ADMIN_PASSWORD = 'admin123';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,14 +20,25 @@ const AdminLogin = () => {
     if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (credentials.username === ADMIN_USERNAME && credentials.password === ADMIN_PASSWORD) {
-      localStorage.setItem('adminLoggedIn', 'true');
-      navigate('/admin');
-    } else {
-      setError('Invalid username or password');
+    setLoading(true);
+    setError('');
+
+    try {
+      const data = await api.login(credentials.email, credentials.password);
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        // Also keep adminLoggedIn for backward compatibility if needed, or remove it
+        localStorage.setItem('adminLoggedIn', 'true');
+        navigate('/admin');
+      } else {
+        setError('Login succeeded but no token received');
+      }
+    } catch (err) {
+      setError(err.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,19 +46,20 @@ const AdminLogin = () => {
     <div className="page-container">
       <h1 className="page-title">Admin Login</h1>
       <p className="page-subtitle">Enter your admin credentials</p>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label className="form-label" htmlFor="username">Username</label>
+          <label className="form-label" htmlFor="email">Email Address</label>
           <input
-            type="text"
-            id="username"
-            name="username"
+            type="email"
+            id="email"
+            name="email"
             className="form-input"
-            value={credentials.username}
+            value={credentials.email}
             onChange={handleChange}
-            placeholder="Enter username"
+            placeholder="Enter email address"
             required
+            disabled={loading}
           />
         </div>
 
@@ -64,30 +74,26 @@ const AdminLogin = () => {
             onChange={handleChange}
             placeholder="Enter password"
             required
+            disabled={loading}
           />
         </div>
 
         {error && <div className="error-message">{error}</div>}
 
-        <button type="submit" className="btn btn-primary">
-          Login
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
         </button>
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={() => navigate('/Selection')}
+          onClick={() => navigate('/register')}
+          disabled={loading}
         >
-          Back to User Selection
+          Back to Staff Login
         </button>
       </form>
-      
-      <div style={{ marginTop: '20px', fontSize: '12px', color: '#666', textAlign: 'center' }}>
-        <p>Demo Credentials:</p>
-        <p>Username: admin | Password: admin123</p>
-      </div>
     </div>
   );
 };
 
 export default AdminLogin;
-

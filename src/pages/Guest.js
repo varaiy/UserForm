@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 
 const Guest = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,8 @@ const Guest = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const videoRef = useRef(null);
@@ -108,12 +111,12 @@ const Guest = () => {
   const startCamera = async () => {
     try {
       setCameraError('');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
           facingMode: 'user',
           width: { ideal: 640 },
           height: { ideal: 480 }
-        } 
+        }
       });
       streamRef.current = stream;
       setIsCameraOpen(true);
@@ -140,7 +143,7 @@ const Guest = () => {
       canvas.height = videoRef.current.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(videoRef.current, 0, 0);
-      
+
       canvas.toBlob((blob) => {
         if (blob) {
           const file = new File([blob], 'captured-photo.jpg', { type: 'image/jpeg' });
@@ -191,26 +194,50 @@ const Guest = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
-      // Store guest data (in a real app, this would be sent to a backend)
-      const guestData = {
-        ...formData,
+      setLoading(true);
+      setApiError('');
+
+      // Prepare data for backend
+      const guestTypeUpper = formData.guestType.toUpperCase(); // ATTENDANT or OTHER
+
+      let guestData = {
+        guestType: guestTypeUpper,
+        mobile: formData.phoneNumber,
         photo: photoPreview,
-        id: Date.now(),
         submittedAt: new Date().toISOString()
       };
-      
-      // Get existing guest entries or create new array
-      const existingGuests = JSON.parse(localStorage.getItem('guestEntries') || '[]');
-      existingGuests.push(guestData);
-      localStorage.setItem('guestEntries', JSON.stringify(existingGuests));
-      
-      setSubmitted(true);
-      setTimeout(() => {
-        navigate('/selection');
-      }, 2000);
+
+      if (guestTypeUpper === 'ATTENDANT') {
+        guestData.attendantName = formData.attendantName;
+        guestData.patientToMeet = formData.patientName;
+      } else if (guestTypeUpper === 'OTHER') {
+        guestData.name = formData.attendantName; // Reusing attendantName field for generic Name
+        guestData.description = formData.purpose;
+      }
+
+      console.log('Sending Guest Data:', guestData);
+
+      try {
+        await api.createGuest(guestData);
+
+        // Backup to local storage
+        const existingGuests = JSON.parse(localStorage.getItem('guestEntries') || '[]');
+        existingGuests.push(guestData);
+        localStorage.setItem('guestEntries', JSON.stringify(existingGuests));
+
+        setSubmitted(true);
+        setTimeout(() => {
+          navigate('/selection');
+        }, 2000);
+      } catch (err) {
+        setApiError(err.message || 'Failed to submit guest information');
+        console.error('Submission Error:', err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -228,7 +255,7 @@ const Guest = () => {
     <div className="page-container">
       <h1 className="page-title">Guest Information</h1>
       <p className="page-subtitle">Please provide your details</p>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label className="form-label" htmlFor="guestType">Guest Type</label>
@@ -238,6 +265,7 @@ const Guest = () => {
             className="form-select"
             value={formData.guestType}
             onChange={handleChange}
+            disabled={loading}
           >
             <option value="">Select guest type</option>
             <option value="attendant">Attendant</option>
@@ -258,6 +286,7 @@ const Guest = () => {
             value={formData.attendantName}
             onChange={handleChange}
             placeholder={formData.guestType === 'attendant' ? 'Enter attendant name' : 'Enter your name'}
+            disabled={loading}
           />
           {errors.attendantName && <div className="error-message">{errors.attendantName}</div>}
         </div>
@@ -273,6 +302,7 @@ const Guest = () => {
               value={formData.patientName}
               onChange={handleChange}
               placeholder="Enter patient name"
+              disabled={loading}
             />
             {errors.patientName && <div className="error-message">{errors.patientName}</div>}
           </div>
@@ -288,6 +318,7 @@ const Guest = () => {
             value={formData.phoneNumber}
             onChange={handleChange}
             placeholder="Enter mobile number"
+            disabled={loading}
           />
           {errors.phoneNumber && <div className="error-message">{errors.phoneNumber}</div>}
         </div>
@@ -303,6 +334,7 @@ const Guest = () => {
               value={formData.purpose}
               onChange={handleChange}
               placeholder="Enter description"
+              disabled={loading}
             />
             {errors.purpose && <div className="error-message">{errors.purpose}</div>}
           </div>
@@ -313,7 +345,7 @@ const Guest = () => {
           {photoPreview && !isCameraOpen && (
             <img src={photoPreview} alt="Preview" className="photo-preview" />
           )}
-          
+
           {isCameraOpen && (
             <div className="camera-preview-container">
               <video
@@ -322,7 +354,7 @@ const Guest = () => {
                 playsInline
                 muted
                 className="camera-preview"
-                style={{ 
+                style={{
                   display: 'block',
                   width: '100%',
                   maxWidth: '400px',
@@ -359,6 +391,7 @@ const Guest = () => {
                   accept="image/*"
                   className="file-input"
                   onChange={handlePhotoChange}
+                  disabled={loading}
                 />
                 <label htmlFor="photo" className="file-input-label">
                   {photo ? 'Change Photo (File)' : 'Choose Photo from File'}
@@ -368,23 +401,26 @@ const Guest = () => {
                 type="button"
                 className="btn btn-secondary"
                 onClick={startCamera}
+                disabled={loading}
               >
                 Capture from Camera
               </button>
             </div>
           )}
-          
+
           {cameraError && <div className="error-message">{cameraError}</div>}
           {errors.photo && <div className="error-message">{errors.photo}</div>}
+          {apiError && <div className="error-message">{apiError}</div>}
         </div>
 
-        <button type="submit" className="btn btn-primary">
-          Submit
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Submitting...' : 'Submit'}
         </button>
         <button
           type="button"
           className="btn btn-secondary"
           onClick={() => navigate('/selection')}
+          disabled={loading}
         >
           Back
         </button>
@@ -394,4 +430,3 @@ const Guest = () => {
 };
 
 export default Guest;
-

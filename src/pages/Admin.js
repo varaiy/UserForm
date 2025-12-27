@@ -10,8 +10,8 @@ const Admin = () => {
    * Redirects to admin login if not logged in
    */
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('adminLoggedIn');
-    if (!isLoggedIn) {
+    const token = localStorage.getItem('token');
+    if (!token) {
       navigate('/admin/login');
     }
   }, [navigate]);
@@ -31,6 +31,7 @@ const Admin = () => {
    * Handles admin logout
    */
   const handleLogout = () => {
+    localStorage.removeItem('token');
     localStorage.removeItem('adminLoggedIn');
     navigate('/admin/login');
   };
@@ -147,7 +148,7 @@ const Admin = () => {
         <div className="stat-card invalid">
           <p className="stat-title">Invalid Coupons</p>
           <h2 className="stat-value">{users.filter(u => u.qrStatus === 'Invalid').length}</h2>
-          <span className="stat-desc">Face not matched</span>
+          <span className="stat-desc">Time Limit Expired</span>
         </div>
       </div>
 

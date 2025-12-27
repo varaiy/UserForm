@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 
 const Staff = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,8 @@ const Staff = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const videoRef = useRef(null);
@@ -95,12 +98,12 @@ const Staff = () => {
   const startCamera = async () => {
     try {
       setCameraError('');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
           facingMode: 'user',
           width: { ideal: 640 },
           height: { ideal: 480 }
-        } 
+        }
       });
       streamRef.current = stream;
       setIsCameraOpen(true);
@@ -127,7 +130,7 @@ const Staff = () => {
       canvas.height = videoRef.current.videoHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(videoRef.current, 0, 0);
-      
+
       canvas.toBlob((blob) => {
         if (blob) {
           const file = new File([blob], 'captured-photo.jpg', { type: 'image/jpeg' });
@@ -170,26 +173,38 @@ const Staff = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
-      // Store staff data (in a real app, this would be sent to a backend)
+      setLoading(true);
+      setApiError('');
+
       const staffData = {
-        ...formData,
+        name: formData.name,
+        mobile: formData.phoneNumber, // Backend expects 'mobile'
+        department: formData.department,
         photo: photoPreview,
-        id: Date.now(),
         submittedAt: new Date().toISOString()
       };
-      
-      // Get existing staff entries or create new array
-      const existingStaff = JSON.parse(localStorage.getItem('staffEntries') || '[]');
-      existingStaff.push(staffData);
-      localStorage.setItem('staffEntries', JSON.stringify(existingStaff));
-      
-      setSubmitted(true);
-      setTimeout(() => {
-        navigate('/selection');
-      }, 2000);
+      console.log('Sending Staff Data:', staffData);
+
+      try {
+        await api.createStaff(staffData);
+        // Also keep local storage for backup/offline if needed
+        const existingStaff = JSON.parse(localStorage.getItem('staffEntries') || '[]');
+        existingStaff.push(staffData);
+        localStorage.setItem('staffEntries', JSON.stringify(existingStaff));
+
+        setSubmitted(true);
+        setTimeout(() => {
+          navigate('/selection');
+        }, 2000);
+      } catch (err) {
+        setApiError(err.message || 'Failed to submit staff information');
+        console.error('Submission Error:', err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -207,7 +222,7 @@ const Staff = () => {
     <div className="page-container">
       <h1 className="page-title">Staff Information</h1>
       <p className="page-subtitle">Please provide your staff details</p>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label className="form-label" htmlFor="name">Full Name</label>
@@ -219,6 +234,7 @@ const Staff = () => {
             value={formData.name}
             onChange={handleChange}
             placeholder="Enter your full name"
+            disabled={loading}
           />
           {errors.name && <div className="error-message">{errors.name}</div>}
         </div>
@@ -233,6 +249,7 @@ const Staff = () => {
             value={formData.phoneNumber}
             onChange={handleChange}
             placeholder="Enter your phone number"
+            disabled={loading}
           />
           {errors.phoneNumber && <div className="error-message">{errors.phoneNumber}</div>}
         </div>
@@ -247,6 +264,7 @@ const Staff = () => {
             value={formData.department}
             onChange={handleChange}
             placeholder="Enter your department"
+            disabled={loading}
           />
           {errors.department && <div className="error-message">{errors.department}</div>}
         </div>
@@ -256,7 +274,7 @@ const Staff = () => {
           {photoPreview && !isCameraOpen && (
             <img src={photoPreview} alt="Preview" className="photo-preview" />
           )}
-          
+
           {isCameraOpen && (
             <div className="camera-preview-container">
               <video
@@ -265,7 +283,7 @@ const Staff = () => {
                 playsInline
                 muted
                 className="camera-preview"
-                style={{ 
+                style={{
                   display: 'block',
                   width: '100%',
                   maxWidth: '400px',
@@ -302,6 +320,7 @@ const Staff = () => {
                   accept="image/*"
                   className="file-input"
                   onChange={handlePhotoChange}
+                  disabled={loading}
                 />
                 <label htmlFor="photo" className="file-input-label">
                   {photo ? 'Change Photo (File)' : 'Choose Photo from File'}
@@ -311,23 +330,26 @@ const Staff = () => {
                 type="button"
                 className="btn btn-secondary"
                 onClick={startCamera}
+                disabled={loading}
               >
                 Capture from Camera
               </button>
             </div>
           )}
-          
+
           {cameraError && <div className="error-message">{cameraError}</div>}
           {errors.photo && <div className="error-message">{errors.photo}</div>}
+          {apiError && <div className="error-message">{apiError}</div>}
         </div>
 
-        <button type="submit" className="btn btn-primary">
-          Submit
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Submitting...' : 'Submit'}
         </button>
         <button
           type="button"
           className="btn btn-secondary"
           onClick={() => navigate('/selection')}
+          disabled={loading}
         >
           Back
         </button>
@@ -337,4 +359,3 @@ const Staff = () => {
 };
 
 export default Staff;
-
