@@ -75,9 +75,9 @@ const AdminLogin = () => {
         <button
           type="button"
           className="btn btn-secondary"
-          onClick={() => navigate('/register')}
+          onClick={() => navigate('/Selection')}
         >
-          Back to Staff Login
+          Back to User Selection
         </button>
       </form>
       

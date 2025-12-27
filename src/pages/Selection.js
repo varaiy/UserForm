@@ -76,6 +76,16 @@ const Selection = () => {
       >
         Continue
       </button>
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => navigate('/admin/login')}
+          style={{ marginTop: '10px' }}
+        >
+          Admin Login
+        </button>
+      </div>
     </div>
   );
 };
