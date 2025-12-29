@@ -1,24 +1,12 @@
-/**
- * Main App Component
- * 
- * This is the root component that sets up React Router and defines all routes.
- * Routes:
- * - / -> Redirects to /register (User Login)
- * - /register -> User Login page
- * - /selection -> Role selection page (Staff or Guest)
- * - /staff -> Staff registration page
- * - /guest -> Guest registration page
- * - /admin/login -> Admin login page
- * - /admin -> Admin dashboard
- */
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Register from './pages/Register';
-import Selection from './pages/Selection';
-import Staff from './pages/Staff';
-import Guest from './pages/Guest';
-import AdminLogin from './pages/AdminLogin';
-import Admin from './pages/Admin';
+import Register from './pages/register/Register';
+import Selection from './pages/selection/Selection';
+import Staff from './pages/staff/Staff';
+import Guest from './pages/guest/Guest';
+import AdminLogin from './pages/admin-login/AdminLogin';
+import Admin from './pages/dashboard/Admin';
+import FaceScanQR from './pages/FaceScanQR';
 import './App.css';
 
 function App() {
@@ -31,13 +19,14 @@ function App() {
           
           {/* User routes */}
           <Route path="/register" element={<Register />} />
-          <Route path="/selection" element={<Selection />} />
+          <Route path="/selection" element={<Selection />} /> 
           <Route path="/staff" element={<Staff />} />
           <Route path="/guest" element={<Guest />} />
           
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/dashboard" element={<Admin />} />
+          <Route path="/face-scan" element={<FaceScanQR />} />
         </Routes>
       </div>
     </Router>
