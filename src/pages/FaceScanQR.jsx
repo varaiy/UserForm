@@ -75,54 +75,65 @@ const FaceScanQR = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <h2>🍽️ Food Face Scan</h2>
+    <div className="face-scan-page">
+      <div className="scan-card">
+        <h2>Face Scan</h2>
+        <p className="subtitle">Position your face within the frame to generate your Meal QR</p>
 
-      <video ref={videoRef} autoPlay style={styles.video} />
-      <canvas ref={canvasRef} style={{ display: "none" }} />
-
-      <button onClick={scanFace} disabled={loading} style={styles.button}>
-        {loading ? "Scanning..." : "Scan Face"}
-      </button>
-
-      <p>{status}</p>
-
-      {qrImage && (
-        <div style={styles.qrBox}>
-          <img src={qrImage} alt="QR" />
-          <p><b>Name:</b> {user.name}</p>
-          <p><b>Mobile:</b> {user.mobile}</p>
-          <p><b>Role:</b> {user.role}</p>
+        <div className="video-container">
+          <video ref={videoRef} autoPlay className="video-feed" playsInline muted />
+          <canvas ref={canvasRef} style={{ display: "none" }} />
+          <div className={`scan-overlay ${loading ? "active" : ""}`}></div>
         </div>
-      )}
+
+        {status !== "Idle" && (
+          <div className={`status-badge ${status.includes("✅") ? "success" : status.includes("❌") ? "error" : "scanning"}`}>
+            {status}
+          </div>
+        )}
+
+        {!qrImage && (
+          <button onClick={scanFace} disabled={loading} className="scan-btn">
+            {loading ? "Scanning..." : "Scan My Face"}
+          </button>
+        )}
+
+        {qrImage && user && (
+          <div className="qr-result-card">
+            <h3>Scan Successful!</h3>
+            <img src={qrImage} alt="Staff QR Code" className="qr-image" />
+
+            <div className="user-info">
+              <div className="info-row">
+                <span className="info-label">Name</span>
+                <span className="info-value">{user.name}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Mobile</span>
+                <span className="info-value">{user.mobile}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Role</span>
+                <span className="info-value">{user.role}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setQrImage(null);
+                setUser(null);
+                setStatus("Idle");
+              }}
+              className="btn btn-secondary"
+              style={{ marginTop: '15px' }}
+            >
+              Scan Another
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    textAlign: "center",
-    padding: 20,
-    background: "#f4f6f8",
-    height: "100vh"
-  },
-  video: {
-    width: 320,
-    borderRadius: 10,
-    border: "2px solid #333"
-  },
-  button: {
-    marginTop: 15,
-    padding: "10px 20px",
-    fontSize: 16,
-    cursor: "pointer"
-  },
-  qrBox: {
-    marginTop: 20,
-    background: "#fff",
-    padding: 15,
-    borderRadius: 10
-  }
 };
 
 export default FaceScanQR;
