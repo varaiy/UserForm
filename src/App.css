@@ -1051,21 +1051,43 @@
 
 /* ================= REGISTER PAGE ================= */
 
+/* ================= REGISTER PAGE ================= */
+
+/* Ensure App container doesn't restrict the full-page background */
+.App:has(.register-page) {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: none;
+}
+
 .register-page {
   min-height: 100vh;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Abstract dark tech background */
-  background-color: #0f172a;
-  background-image:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+  /* Background Image */
+  background-image: url('https://images.pexels.com/photos/3184287/pexels-photo-3184287.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
   background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  /* Ensures background stays fixed during scroll */
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+}
+
+/* Dark overlay to ensure text readability if needed, though glass card handles it */
+.register-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 /* Moving Disclaimer */
